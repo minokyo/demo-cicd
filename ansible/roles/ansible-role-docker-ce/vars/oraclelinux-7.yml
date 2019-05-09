@@ -1,0 +1,9 @@
+---
+docker_repo_key: "https://yum.dockerproject.org/gpg"
+docker_repo:
+  - { url: "https://yum.dockerproject.org/repo/main/oraclelinux/7", name: "dockerrepo", desc: "Docker Repository", key: "{{ docker_repo_key }}", keycheck: yes, enabled: yes, file: "docker"}
+docker_package: docker-ce
+docker_version: "18.03.1"
+docker_storage_driver: "overlay2"
+docker_config_file: "/etc/sysconfig/docker"
+docker_systemd_service_path: "/etc/systemd/system/docker.service.d"

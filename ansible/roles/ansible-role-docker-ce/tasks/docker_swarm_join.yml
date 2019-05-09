@@ -1,0 +1,10 @@
+---
+- name: add swarm manager
+  shell: "{{ hostvars[ansible_play_hosts[0]]['swarm_join_manager_fact'] }}"
+  when: (inventory_hostname == ansible_play_hosts[1]) or 
+        (inventory_hostname == ansible_play_hosts[2])
+
+- name: add swarm worker
+  shell: "{{ hostvars[ansible_play_hosts[0]]['swarm_join_worker_fact'] }}"
+  when: (inventory_hostname != ansible_play_hosts[1]) and
+        (inventory_hostname != ansible_play_hosts[2])

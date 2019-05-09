@@ -1,0 +1,9 @@
+git-client:latest
+git:latest
+global-build-stats:latest
+greenballs:latest
+jobConfigHistory:latest
+parameterized-trigger:latest
+scm-api:latest
+show-build-parameters:latest
+slack:latest

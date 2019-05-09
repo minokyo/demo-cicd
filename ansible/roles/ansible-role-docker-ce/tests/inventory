@@ -1,0 +1,2 @@
+[docker]
+d1 ansible_host=10.111.111.10 ansible_become=true ansible_ssh_private_key_file=~/.ssh/id_rsa ansible_user=ubuntu ansible_python_interpreter=/usr/bin/python3

@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  author: Ka Ming Lau
+  description: Install Docker CE
+  license: "MIT license" 
+  min_ansible_version: 2.3
+  platforms:
+    - name: Ubuntu
+      versions:
+        - trusty
+        - xenial
+    - name: SLES
+      versions:
+        - 12.1
+        - 12.2
+        - 12.3
+    - name: Oracle
+      versions:
+        - 7.3
+  categories:
+    - system
+dependencies: []

@@ -1,0 +1,48 @@
+---
+- hosts: jenkins
+
+  pre_tasks:
+    - name: install python easy_install
+      package: name=python-setuptools state=present
+    
+    - name: install python pip
+      easy_install: name="pip" state=present executable=easy_install
+ 
+  roles:
+    - ansible-role-docker-ce
+
+  tasks:
+    - name: create self-signed ssl cert
+      command: >
+        openssl req -new -nodes -sha256 -x509 -subj
+        "/C=''/ST=''/L=''/O=''/OU=''/CN=mydemo"
+        -days 3650
+        -keyout /etc/ssl/private/self_signed.key
+        -out /etc/ssl/certs/self_signed.crt
+        -extensions v3_ca
+        creates=/etc/ssl/certs/self_signed.crt
+
+    - name: create folder for jenkins docker
+      file:
+        name: /opt/jenkins
+        state: directory
+
+    - name: copy jenkins docker context
+      copy:
+        src: "{{ item }}"
+        dest: "/opt/jenkins/{{ item }}"
+      with_items:
+        - Dockerfile
+        - plugins.txt
+        - docker-compose.yml
+        - nginx_vhost.conf
+
+    - name: build jenkins image
+      docker_image:
+        name: "demo-jenkins"
+        tag: "lts"
+        path: "/opt/jenkins"
+        state: present
+
+    - name: start jenkins container
+      docker_service: project_src="/opt/jenkins" files=docker-compose.yml state=present

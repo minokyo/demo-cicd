@@ -1,0 +1,106 @@
+---
+# Install Docker
+- name: install prequisites
+  package: name={{ item }} state=latest
+  with_items:
+    - ca-certificates
+
+  # REVIEW: Problem using zypper module to install package with version
+- name: remove old docker
+  package: name={{ item }} state=absent
+  with_items:
+    - docker
+
+- name: enable cgroup memory and swap accounting
+  lineinfile: dest=/etc/default/grub line='GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"' state=present
+  register: memory_accounting
+
+- name: update grub config
+  command: update-bootloader --refresh
+  when: memory_accounting | changed
+
+- name: restart system if needed
+  shell: sleep 2 && shutdown -r now "Ansible role docker updates triggered"
+  async: 1
+  poll: 0
+  ignore_errors: true
+  when: (memory_accounting | changed)
+
+- name: wait for server
+  local_action:
+    module: wait_for
+    port: "{{ ansible_port | default(22) }}"
+    host: "{{ ansible_host | default(inventory_hostname) }}"
+    state: started
+    delay: 10
+    timeout: 600
+  become: false
+
+- name: download docker
+  command: curl -4Ls {{ docker_download_url }} -o {{ docker_download_path }} creates={{ docker_download_path }}
+
+- name: create directory
+  file: path={{ docker_extract_path }} state=directory
+
+- name: extract docker
+  unarchive: src={{ docker_download_path }} dest={{ docker_extract_path }} remote_src=yes
+
+- name: list docker binary files
+  find: path={{ docker_extract_path }}/docker
+  register: docker_binary
+
+- name: install docker
+  copy: src={{ item.path }} dest={{ docker_install_path }} mode={{ item.mode }} remote_src=yes
+  with_items:
+    - "{{ docker_binary.files }}"
+
+- name: create docker group
+  group: name=docker state=present
+
+- name: create docker systemd override directory
+  file: path={{ docker_systemd_service_path }} state=directory owner=root group=root
+
+- name: startup files
+  template: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: 'docker.systemd.service.j2', dest: '/usr/lib/systemd/system/docker.service', mode: '0644' }
+    - { src: 'docker.systemd.socket.j2', dest: '/usr/lib/systemd/system/docker.socket', mode: '0644' }
+    - { src: 'docker.systemd.override.j2', dest: '{{ docker_systemd_service_path }}/docker.conf', mode: '0644' }
+  notify:
+    - restart docker
+  register: docker_startup_files
+
+- name: docker daemon reload
+  command: systemctl daemon-reload
+  when: (docker_startup_files | changed)
+
+- name: udev rule
+  template: src="docker-ce.udev.rules.j2" dest=/usr/lib/udev/rules.d/80-docker-ce.rules mode='0644'
+
+- name: create docker setting directory
+  file: path=/etc/docker state=directory owner=root group=root
+
+- name: docker daemon config
+  template: src=daemon.json.j2 dest=/etc/docker/daemon.json owner=root group=root
+  notify:
+    - restart docker
+  register: docker_daemon_config
+
+- name: docker default config
+  template: src=docker.j2 dest=/etc/sysconfig/docker owner=root group=root
+  notify:
+    - restart docker
+  register: docker_config
+
+- meta: flush_handlers
+
+- name: remove old docker python
+  pip: name=docker-py state=absent extra_args='--trusted-host pypi.python.org'
+
+- name: install python docker requirement
+  pip: name={{ docker_py_package }} version={{ docker_py_version }} state=present extra_args='--trusted-host pypi.python.org'
+  register: install_docker_py
+
+- name: install docker-compose requirement
+  pip: name={{ docker_compose_package }} version={{ docker_compose_version }} state=present extra_args='--trusted-host pypi.python.org'
+  register: install_docker_compose

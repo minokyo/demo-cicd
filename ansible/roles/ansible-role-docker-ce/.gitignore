@@ -1,0 +1,7 @@
+*.DS_Store
+*.py[co]
+*.log
+*.deb
+*.retry
+nohup.out
+.ansible/

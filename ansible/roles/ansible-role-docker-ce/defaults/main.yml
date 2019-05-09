@@ -1,0 +1,31 @@
+---
+# Default Ansible YAML
+docker_package: docker-ce
+docker_version: "18.03.1"
+docker_download_url: "https://download.docker.com/linux/static/stable/x86_64/docker-{{ docker_version }}-ce.tgz"
+docker_download_path: "/usr/local/src/{{ docker_download_url | basename }}"
+docker_extract_path: "/usr/local/src/docker-{{ docker_version }}"
+docker_install_path: "/usr/bin"
+docker_py_package: docker
+docker_py_version: "3.3.0"
+docker_compose_package: docker-compose
+docker_compose_version: "1.21.2"
+docker_bridge_name: "docker0"
+docker_bridge_network: "172.17.0.1/16"
+docker_registry_host: ""
+docker_registry_scheme: "https"
+docker_opts: '"-H unix:///var/run/docker.sock"'
+docker_swarm_mode: false
+docker_swarm_bridge_network: "172.18.0.1/16"
+docker_swarm_bridge_mtu: "1500"
+docker_swarm_bridge_name: docker_gwbridge
+docker_swarm_ingress_cidr: "10.255.0.0/16"
+docker_swarm_ingress_mtu: "1450"
+docker_swarm_ingress_name: ingress
+docker_swarm_advertise_addr: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+docker_swarm_port: 2377
+docker_swarm_data_addr: "{{ docker_swarm_advertise_addr }}"
+docker_upgrade: false
+docker_http_proxy: ""
+docker_https_proxy: ""
+docker_no_proxy: ""

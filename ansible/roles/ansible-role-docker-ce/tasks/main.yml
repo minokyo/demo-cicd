@@ -1,0 +1,18 @@
+---
+# Install Docker
+- name: include os-specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution | lower }}-{{ ansible_distribution_version }}.yml"
+    - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version }}.yml"
+    - "{{ ansible_os_family | lower }}.yml"
+    - defaults.yml
+
+- name: docker setup
+  include: "setup-docker-{{ ansible_os_family }}.yml"
+  static: no
+
+- name: docker swarm setup
+  include: "setup-docker-swarm-{{ ansible_os_family }}.yml"
+  when: (docker_swarm_mode is defined) and (docker_swarm_mode | bool)
+  static: no

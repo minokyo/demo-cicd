@@ -1,0 +1,6 @@
+---
+docker_package: docker-ce
+docker_version: "18.03.1"
+docker_storage_driver: "aufs"
+docker_config_file: "/etc/default/docker"
+docker_systemd_service_path: "/etc/systemd/system/docker.service.d"

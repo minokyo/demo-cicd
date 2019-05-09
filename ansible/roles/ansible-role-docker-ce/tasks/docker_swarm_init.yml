@@ -1,0 +1,18 @@
+---
+- name: initialize swarm mode
+  shell: docker swarm init --advertise-addr {{ docker_swarm_advertise_addr }}:{{ docker_swarm_port }} --data-path-addr {{ docker_swarm_data_addr }}
+  when:
+    - swarm_status | trim | lower | match("inactive")
+
+- name: get swarm worker join command
+  shell: docker swarm join-token worker | grep "docker swarm join --token"
+  register: swarm_join_worker
+
+- name: get swarm manager join command
+  shell: docker swarm join-token manager | grep "docker swarm join --token"
+  register: swarm_join_manager
+
+- name: set swarm facts
+  set_fact:
+    swarm_join_worker_fact: "{{ swarm_join_worker.stdout | trim }}"
+    swarm_join_manager_fact: "{{ swarm_join_manager.stdout | trim }}"

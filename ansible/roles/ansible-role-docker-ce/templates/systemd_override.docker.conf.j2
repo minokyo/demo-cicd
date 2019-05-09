@@ -1,0 +1,13 @@
+[Service]
+{% if docker_http_proxy is defined and docker_http_proxy %}
+Environment="HTTP_PROXY='{{ docker_http_proxy }}'"
+{% endif %}
+{% if docker_https_proxy is defined and docker_https_proxy %}
+Environment="HTTPS_PROXY='{{ docker_https_proxy }}'"
+{% endif %}
+{% if docker_no_proxy is defined and docker_no_proxy %}
+Environment="NO_PROXY='{{ docker_no_proxy }}'"
+{% endif %}
+EnvironmentFile=-{{ docker_config_file }}
+ExecStart=
+ExecStart=/usr/bin/dockerd $DOCKER_OPTS

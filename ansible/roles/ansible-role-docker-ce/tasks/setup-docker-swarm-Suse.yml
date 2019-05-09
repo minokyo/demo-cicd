@@ -1,0 +1,55 @@
+---
+- name: check HA extension status
+  shell: SUSEConnect --status-text | grep -v '^$' | grep '{{ docker_suse_ha_extension }}'
+  register: suse_ha_extension
+
+- name: warn SLES HA extension code input
+  fail: msg="Please activate SLES HA Extension {{ docker_suse_ha_extension }}."
+  when: (suse_ha_extension.stdout == "")
+
+- name: install ipvs kernel packages
+  package: name={{ item }} state=present
+  with_items:
+    - ipvsadm
+    - cluster-network-kmp-default
+  notify:
+    - restart docker
+
+- name: check swarm is active
+  shell: docker info | grep '^Swarm:' | cut -d ':' -f 2
+  register: docker_swarm_info
+
+- name: register Swarm status
+  set_fact:
+    swarm_status: "{{ docker_swarm_info.stdout }}"
+
+- name: docker swarm bridge network setup
+  shell: |
+    docker network create \
+    --subnet {{ docker_swarm_bridge_network }} \
+    --opt com.docker.network.bridge.name=docker_gwbridge \
+    --opt com.docker.network.bridge.enable_icc=false \
+    --opt com.docker.network.bridge.enable_ip_masquerade=true \
+    --opt com.docker.network.driver.mtu={{ docker_swarm_bridge_mtu }} \
+    {{ docker_swarm_bridge_name }}
+  when: swarm_status | trim | lower | match("inactive")
+
+#- name: docker swarm ingress network setup 
+#  shell: |
+#    docker network create \
+#    --driver overlay \
+#    --ingress \
+#    --subnet {{ docker_swarm_ingress_cidr }} \
+#    --opt com.docker.network.driver.mtu={{ docker_swarm_ingress_mtu }} \
+#    {{ docker_swarm_ingress_name }}
+#  when: swarm_status | trim | lower | match("inactive")
+
+- include: docker_swarm_init.yml
+  static: no
+  when: inventory_hostname == ansible_play_hosts[0]
+
+- include: docker_swarm_join.yml
+  static: no
+  when:
+    - swarm_status | trim | lower | match("inactive")
+    - inventory_hostname != ansible_play_hosts[0]
